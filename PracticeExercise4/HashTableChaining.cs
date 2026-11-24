@@ -10,7 +10,12 @@ public class HashTableChaining<K, V> : IHashTable<K, V>
 
     public HashTableChaining()
     {
-        // init all entry lists
+        entryListArray = new List<HashEntry<K, V>>[initialCapacity];
+        for (int i = 0; i < entryListArray.Length; i++)
+        {
+            entryListArray[i] = new List<HashEntry<K, V>>();
+        }
+        
         
     }
 
@@ -21,60 +26,104 @@ public class HashTableChaining<K, V> : IHashTable<K, V>
 
     public bool Add(K key, V value)
     {
-        // resize if needed
-        
+        if ((count + 1) / (double)entryListArray.Length > MAX_LOAD_FACTOR)
+        {
+            Resize();
+        }
 
-        // get the hash of the key
-        
+        int hash = Hash(key);
+        int index = hash % entryListArray.Length;
 
-        // find the correct array index / element
-        
+        foreach (var entry in entryListArray[index])
+        {
+            if (EqualityComparer<K>.Default.Equals(entry.Key, key))
+            {
+                entry.Value = value;
+                return true;
+            }
+        }
 
-        // check if key is already present
-        
-
-        // add the new key/value pair to the correct list
-       
+        entryListArray[index].Add(new HashEntry<K, V>(key, value));
+        count++;
 
         return false;
     }
 
     public bool ContainsKey(K key)
     {
-        throw new NotImplementedException();
+        int hash = Hash(key);
+        int index = hash % entryListArray.Length;
+        return entryListArray[index].Any(entry =>
+            EqualityComparer<K>.Default.Equals(entry.Key, key));
     }
 
     public bool ContainsValue(V value)
     {
-        throw new NotImplementedException();
+        foreach (var list in entryListArray)
+        {
+            foreach (var entry in list)
+            {
+                if (EqualityComparer<V>.Default.Equals(entry.Value, value))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public V Get(K key)
     {
-        // hash the key
-        
-
-        // find the correct index of the list
-        
-
-        // find the entry with the given key (in the correct list)
-        
-        return default;
+        int index = Hash(key) % entryListArray.Length;
+        foreach (var entry in entryListArray[index])
+        {
+            if (EqualityComparer<K>.Default.Equals(entry.Key, key))
+            {
+                return entry.Value;
+            }
+        }
+        throw new KeyNotFoundException();
     }
 
     public List<K> GetKeys()
     {
-        return null;
+        var keys = new List<K>();
+        foreach (var list in entryListArray)
+        {
+            foreach (var entry in list)
+            {
+                keys.Add(entry.Key);
+            }
+        }
+        return keys;
     }
 
     public List<V> GetValues()
     {
-        throw new NotImplementedException();
+        var values = new List<V>();
+        foreach (var list in entryListArray)
+        {
+            foreach (var entry in list)
+            {
+                values.Add(entry.Value);
+            }
+        }
+        return values;
     }
 
     public bool Remove(K key)
     {
-        throw new NotImplementedException();
+        int index = Hash(key) % entryListArray.Length;
+        for (int i = 0; i < entryListArray[index].Count; i++)
+        {
+            if (EqualityComparer<K>.Default.Equals(entryListArray[index][i].Key, key))
+            {
+                entryListArray[index].RemoveAt(i);
+                count--;
+                return true;
+            }
+        }
+        return false;
     }
 
 
